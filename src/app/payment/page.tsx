@@ -29,7 +29,8 @@ function PaymentContent() {
   useEffect(() => {
     const fetchPlan = async () => {
       const prices = await db.getPrices();
-      const selected = prices[planId] || defaultPricing['1h'];
+      // FIX: Added 'as any' to bypass the TypeScript index signature error
+      const selected = (prices as any)[planId] || defaultPricing['1h'];
       setPlan(selected);
     };
     fetchPlan();
@@ -207,10 +208,10 @@ function PaymentContent() {
       <div className="w-full max-w-md space-y-3 mb-6">
         <p className="font-bold text-slate-400 text-xs uppercase tracking-widest ml-2">Select Method</p>
         
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 relative">
             <button 
             onClick={() => setPaymentMethod('momo')}
-            className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${paymentMethod === 'momo' ? 'border-[#FFCC00] bg-yellow-50' : 'border-white bg-white shadow-sm'}`}
+            className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all relative ${paymentMethod === 'momo' ? 'border-[#FFCC00] bg-yellow-50' : 'border-white bg-white shadow-sm'}`}
             >
             <div className="w-10 h-10 bg-[#FFCC00] rounded-full flex items-center justify-center font-bold text-[10px] border border-[#e6b800] text-slate-900">MoMo</div>
             <span className="font-bold text-slate-700 text-sm">MTN</span>
@@ -219,7 +220,7 @@ function PaymentContent() {
 
             <button 
             onClick={() => setPaymentMethod('om')}
-            className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${paymentMethod === 'om' ? 'border-[#FF7900] bg-orange-50' : 'border-white bg-white shadow-sm'}`}
+            className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all relative ${paymentMethod === 'om' ? 'border-[#FF7900] bg-orange-50' : 'border-white bg-white shadow-sm'}`}
             >
             <div className="w-10 h-10 bg-[#FF7900] rounded-lg flex items-center justify-center font-bold text-[8px] text-white leading-none">orange<br/>money</div>
             <span className="font-bold text-slate-700 text-sm">Orange</span>
@@ -267,7 +268,7 @@ function PaymentContent() {
         `}
       >
         {loading ? <Loader2 className="animate-spin" /> : <CreditCard size={20} />}
-        {loading ? "Processing..." : `Pay ${plan.price} FCFA`}
+        {loading ? "Processing..." : `Pay ${plan?.price || '0'} FCFA`}
       </button>
 
       <p className="mt-6 text-xs text-center text-slate-400 max-w-xs leading-relaxed">

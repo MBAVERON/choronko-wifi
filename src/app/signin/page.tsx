@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Wifi, Loader2, KeyRound, AlertCircle } from "lucide-react";
-import { db } from '@/utils/db'; // Import the database
+import { db } from '@/utils/db'; 
 
 export default function SignInPage() {
   const router = useRouter();
@@ -17,29 +17,35 @@ export default function SignInPage() {
     if (lastCode) setSavedCode(lastCode);
   }, []);
 
-  const handleReconnect = (e: React.FormEvent) => {
+  // FIX: Added 'async' here
+  const handleReconnect = async (e: React.FormEvent) => {
     e.preventDefault();
     if (code.length < 4) return;
     
     setLoading(true);
     setError(null);
 
-    // Simulate network delay
-    setTimeout(() => {
-      // 1. Check the database
-      const validVoucher = db.verify(code);
+    try {
+      // Simulate network delay properly in an async function
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // 2. ALSO check if it matches the "Saved Code" (in case DB reset during dev)
+      // FIX: Added 'await' here so it actually waits for the database answer
+      const validVoucher = await db.verify(code);
+      
+      // ALSO check if it matches the "Saved Code" (in case DB reset during dev)
       const isSavedMatch = code === savedCode;
 
       if (validVoucher || isSavedMatch) {
         router.push('/dashboard');
       } else {
         setLoading(false);
-        // FIXED ERROR MESSAGE BELOW
         setError("Invalid Code. Please check your receipt.");
       }
-    }, 1500);
+    } catch (err) {
+      console.error(err);
+      setLoading(false);
+      setError("Connection error. Try again.");
+    }
   };
 
   const useSavedCode = () => {
