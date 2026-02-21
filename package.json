@@ -9,13 +9,16 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@hachther/mesomb": "^2.0.1",
     "@supabase/supabase-js": "^2.95.3",
     "clsx": "^2.1.1",
+    "firebase": "^12.9.0",
     "framer-motion": "^12.34.0",
     "lucide-react": "^0.564.0",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "ros-client": "^1.1.2",
     "tailwind-merge": "^3.4.0",
     "zustand": "^5.0.11"
   },

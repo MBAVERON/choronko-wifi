@@ -1,134 +1,279 @@
 "use client";
-import React, { useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Lock, Loader2, XCircle } from "lucide-react";
-import { db } from '@/utils/db'; // Import the new DB
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { db, defaultPricing } from '@/utils/db';
+import { Check, ArrowLeft, CreditCard, Loader2, Phone, Copy, Wifi, Home } from 'lucide-react';
 
-const plansConfig: any = {
-  '1h': { price: '500', name: { en: 'Quick Surf', fr: 'Surf Rapide' }, color: 'bg-blue-600', gradient: 'from-blue-600 to-cyan-400' },
-  '24h': { price: '1,000', name: { en: 'Day Pass', fr: 'Pass Jour' }, color: 'bg-purple-600', gradient: 'from-violet-600 to-purple-600' },
-  'fam': { price: '3,000', name: { en: 'Family Plan', fr: 'Plan Famille' }, color: 'bg-orange-600', gradient: 'from-orange-500 to-red-500' },
-  '30d': { price: '10,000', name: { en: 'Monthly Pass', fr: 'Pass Mensuel' }, color: 'bg-emerald-600', gradient: 'from-emerald-600 to-green-500' }
-};
-
-const content = {
-  en: { back: "Back", currency: "FCFA", phoneLabel: "Mobile Money Number", payBtn: "Pay Now", hint: "Dial *126# (MTN) or #150# (Orange)" },
-  fr: { back: "Retour", currency: "FCFA", phoneLabel: "Numéro Mobile Money", payBtn: "Payer", hint: "Composez *126# (MTN) ou #150# (Orange)" }
-};
-
-function PaymentContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const planId = searchParams.get('plan') || '1h'; 
-  const lang = (searchParams.get('lang') as 'en' | 'fr') || 'en';
-  const activePlan = plansConfig[planId] || plansConfig['1h'];
-  const t = content[lang];
-
-  const [provider, setProvider] = useState<'mtn' | 'orange'>('mtn');
-  const [phone, setPhone] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'failed'>('idle');
-
-  const handlePay = () => {
-    if (phone.length < 9) return;
-    setStatus('loading');
-
-    // 1. Simulate Payment Delay
-    setTimeout(() => {
-      // 2. Fail if number is 600000000
-      if (phone === '600000000') {
-        setStatus('failed');
-        return;
-      }
-
-      // 3. GENERATE CODE
-      const newCode = `CH-${Math.floor(10000 + Math.random() * 90000)}`;
-
-      // 4. SAVE TO DATABASE (So Admin sees it)
-      db.add({
-        code: newCode,
-        plan: activePlan.name[lang],
-        price: activePlan.price,
-        status: 'active',
-        createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      });
-
-      // 5. Success Redirect
-      router.push(`/connect?code=${newCode}&plan=${planId}&lang=${lang}`);
-      
-    }, 2500);
-  };
-
+export default function PaymentPage() {
   return (
-    <div className="min-h-screen bg-slate-50 relative overflow-hidden font-sans flex flex-col">
-      <div className={`absolute top-0 left-0 w-full h-[60vh] bg-gradient-to-b ${activePlan.gradient} opacity-10 rounded-b-[40px] transition-all duration-500 -z-10`} />
-
-      <header className="w-full z-40 px-6 py-4">
-        <div className="max-w-5xl mx-auto flex justify-between items-center">
-          <button onClick={() => router.back()} className="group flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-xl border border-white/10 text-slate-900 transition-all">
-            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-            <span className="font-bold text-sm hidden sm:inline">{t.back}</span>
-          </button>
-          <div className="flex items-center gap-1.5 opacity-60 text-slate-900 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-            <Lock size={12} /> <span className="text-[10px] font-bold uppercase tracking-widest">SSL Secure</span>
-          </div>
-        </div>
-      </header>
-
-      <div className="flex-1 flex flex-col items-center justify-start pt-6 px-4">
-        <div className="w-full max-w-sm bg-white rounded-[32px] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden relative z-10">
-          <div className="p-8 text-center border-b border-slate-50 relative">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{activePlan.name[lang]}</p>
-            <h1 className="text-5xl font-extrabold text-slate-900 tracking-tight transition-all">
-              {activePlan.price}<span className="text-lg text-slate-400 font-medium ml-1">{t.currency}</span>
-            </h1>
-          </div>
-
-          <div className="p-6 space-y-6">
-            <div className="grid grid-cols-2 gap-3 p-1 bg-slate-100 rounded-xl">
-              <button onClick={() => setProvider('mtn')} className={`py-3 rounded-lg text-sm font-bold transition-all flex flex-col items-center gap-1 ${provider === 'mtn' ? 'bg-white shadow-sm text-slate-900 ring-1 ring-yellow-400' : 'text-slate-400 hover:text-slate-600'}`}>
-                <span>MTN MoMo</span>{provider === 'mtn' && <div className="h-1 w-8 bg-[#FFCC00] rounded-full"></div>}
-              </button>
-              <button onClick={() => setProvider('orange')} className={`py-3 rounded-lg text-sm font-bold transition-all flex flex-col items-center gap-1 ${provider === 'orange' ? 'bg-white shadow-sm text-orange-600 ring-1 ring-orange-500' : 'text-slate-400 hover:text-slate-600'}`}>
-                <span>Orange Money</span>{provider === 'orange' && <div className="h-1 w-8 bg-[#FF7900] rounded-full"></div>}
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase ml-1">{t.phoneLabel}</label>
-              <div className="relative group">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-3 pointer-events-none">
-                  <img src="https://flagcdn.com/w40/cm.png" alt="Cameroon" className="w-6 h-auto rounded-[2px] shadow-sm"/>
-                  <span className="font-bold text-slate-500 text-lg tracking-tight">+237</span>
-                  <div className="w-[1px] h-6 bg-slate-200"></div>
-                </div>
-                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))} placeholder="6XX XX XX XX" className={`w-full pl-28 pr-4 py-4 bg-slate-50 border-2 rounded-xl text-lg font-bold text-slate-900 focus:outline-none transition-all ${provider === 'mtn' ? 'focus:border-[#FFCC00] focus:bg-yellow-50/10' : 'focus:border-[#FF7900] focus:bg-orange-50/10'} ${!phone ? 'border-slate-100' : 'border-slate-300'}`} maxLength={9} />
-              </div>
-            </div>
-
-            <button onClick={handlePay} disabled={status === 'loading' || phone.length < 9} className={`w-full py-4 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95 ${status === 'loading' ? 'bg-slate-300 shadow-none cursor-not-allowed' : (provider === 'mtn' ? 'bg-slate-900 hover:bg-slate-800 shadow-yellow-900/10' : 'bg-[#FF7900] hover:bg-[#e66e00] shadow-orange-500/20')}`}>
-              {status === 'loading' ? <Loader2 className="animate-spin" /> : t.payBtn}
-            </button>
-          </div>
-        </div>
-        <p className="text-center mt-6 text-xs text-slate-400">{t.hint}</p>
-      </div>
-
-      {status === 'failed' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-xs rounded-[32px] p-6 text-center shadow-2xl animate-in zoom-in-95">
-            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce"><XCircle size={32} /></div>
-            <h2 className="text-xl font-extrabold text-slate-900 mb-2">Payment Failed</h2>
-            <div className="flex flex-col gap-2">
-              <button onClick={() => setStatus('idle')} className="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-colors">Try Again</button>
-              <button onClick={() => router.back()} className="w-full py-3 text-slate-400 font-bold hover:text-slate-600 text-xs uppercase tracking-widest">Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    <Suspense fallback={<div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-green-600"/></div>}>
+      <PaymentContent />
+    </Suspense>
   );
 }
 
-export default function PaymentPage() {
-  return <Suspense fallback={<div>Loading...</div>}><PaymentContent /></Suspense>;
+function PaymentContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  
+  const planId = searchParams.get('plan') || '1h'; 
+  
+  const [loading, setLoading] = useState(false);
+  const [plan, setPlan] = useState<any>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'momo' | 'om'>('momo');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  
+  // NEW: State to hold the receipt data after payment
+  const [successReceipt, setSuccessReceipt] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchPlan = async () => {
+      const prices = await db.getPrices();
+      const selected = prices[planId] || defaultPricing['1h'];
+      setPlan(selected);
+    };
+    fetchPlan();
+  }, [planId]);
+
+  const handlePayment = async () => {
+    if (!phoneNumber || phoneNumber.length < 9) return;
+
+    setLoading(true);
+    
+    try {
+      // Step 1: Process payment (simulated)
+      // In a real app, this would call your payment provider (MTN/Orange)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Step 2: Fetch actual voucher from database
+      // This calls the /api/get-voucher endpoint to get a real code
+      const voucherResponse = await fetch('/api/get-voucher', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          voucherCategory: plan.name.en, // Must match "1 Day Unlimited", etc.
+          phoneNumber: phoneNumber 
+        }),
+      });
+
+      const voucherData = await voucherResponse.json();
+
+      if (!voucherData.success) {
+        alert(voucherData.message || "No vouchers available for this plan.");
+        setLoading(false);
+        return;
+      }
+
+      // Step 3: Save the sale record to database
+      const saleRecord = {
+        code: voucherData.code,
+        plan: plan.name.en, 
+        price: plan.price,
+        method: paymentMethod,
+        customerPhone: phoneNumber,
+        status: 'active',
+        synced: false,
+        createdAt: new Date().toISOString()
+      };
+
+      await db.add(saleRecord);
+      
+      // Step 4: Show success receipt with the REAL voucher code from database
+      setSuccessReceipt({
+          code: voucherData.code,
+          planName: plan.name.en,
+          amount: plan.price,
+          phone: phoneNumber
+      });
+        
+    } catch (e) {
+      console.error(e);
+      // Only alert on critical errors (like no internet)
+      alert("Connection Error. Please check your internet.");
+    }
+    setLoading(false);
+  };
+
+  const copyToClipboard = () => {
+    if (successReceipt) {
+        navigator.clipboard.writeText(successReceipt.code);
+        alert("Code Copied!"); // Tiny feedback is okay here, or we can make a custom one
+    }
+  };
+
+  // --- VIEW 1: LOADING ---
+  if (!plan) return <div className="min-h-screen flex items-center justify-center font-bold text-slate-400">Loading Plan...</div>;
+
+  // --- VIEW 2: SUCCESS RECEIPT (Replaces the Pop-up) ---
+  if (successReceipt) {
+    return (
+        <div className="min-h-screen bg-green-600 font-sans p-6 flex flex-col items-center justify-center relative overflow-hidden">
+            {/* Background Decoration */}
+            <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+                <Wifi size={400} className="text-white absolute -top-20 -left-20" />
+            </div>
+
+            <div className="bg-white w-full max-w-sm rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in duration-500">
+                <div className="bg-slate-900 p-8 text-center text-white relative">
+                    <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-900/50">
+                        <Check size={32} strokeWidth={4} />
+                    </div>
+                    <h2 className="text-2xl font-black uppercase tracking-tight">Payment Success</h2>
+                    <p className="text-slate-400 text-sm font-bold mt-2">Transaction Complete</p>
+                    
+                    {/* Ticket Cutout Effect */}
+                    <div className="absolute -bottom-3 left-0 w-full flex justify-between px-4">
+                        <div className="w-6 h-6 bg-green-600 rounded-full"></div>
+                        <div className="w-6 h-6 bg-green-600 rounded-full"></div>
+                    </div>
+                </div>
+
+                <div className="p-8 pt-10">
+                    <div className="text-center mb-8">
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Your Access Code</p>
+                        <div 
+                            onClick={copyToClipboard}
+                            className="bg-slate-100 border-2 border-dashed border-slate-300 p-4 rounded-xl flex items-center justify-center gap-3 cursor-pointer hover:bg-slate-200 transition-colors group"
+                        >
+                            <span className="text-3xl font-mono font-black text-slate-900 tracking-wider">{successReceipt.code}</span>
+                            <Copy size={20} className="text-slate-400 group-hover:text-slate-600" />
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-2 font-bold">Click box to copy</p>
+                    </div>
+
+                    <div className="space-y-4 text-sm border-t border-slate-100 pt-6 mb-8">
+                        <div className="flex justify-between">
+                            <span className="text-slate-500 font-bold">Plan</span>
+                            <span className="font-black text-slate-900">{successReceipt.planName}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-slate-500 font-bold">Phone</span>
+                            <span className="font-black text-slate-900">{successReceipt.phone}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-slate-500 font-bold">Amount Paid</span>
+                            <span className="font-black text-green-600">{successReceipt.amount} FCFA</span>
+                        </div>
+                    </div>
+
+                    <button 
+                        onClick={() => router.push('/')}
+                        className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 transition-all"
+                    >
+                        <Home size={20} /> Back to Home
+                    </button>
+                </div>
+            </div>
+            
+            <p className="text-white/60 text-xs font-bold mt-8 text-center">
+                A copy of this code has been sent via SMS to your number.
+            </p>
+        </div>
+    );
+  }
+
+  // --- VIEW 3: CHECKOUT FORM (The default view) ---
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans p-6 flex flex-col items-center">
+      
+      {/* Header */}
+      <div className="w-full max-w-md flex items-center mb-8">
+        <button onClick={() => router.back()} className="p-2 bg-white rounded-full border border-slate-200 hover:bg-slate-100 transition-colors">
+          <ArrowLeft size={20} className="text-slate-600"/>
+        </button>
+        <span className="ml-4 font-bold text-lg text-slate-700">Checkout</span>
+      </div>
+
+      {/* Bill Card */}
+      <div className="w-full max-w-md bg-white p-6 rounded-[32px] shadow-sm border border-slate-100 mb-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-24 h-24 bg-green-50 rounded-bl-full -mr-4 -mt-4"></div>
+        <div className="flex justify-between items-start mb-6 relative z-10">
+          <div>
+            <h2 className="text-2xl font-black text-slate-900">{plan.name.en}</h2>
+            <p className="text-slate-400 font-bold text-sm">Valid for {planId.replace('h', ' Hours').replace('d', ' Days')}</p>
+          </div>
+          <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+            IN STOCK
+          </div>
+        </div>
+        <div className="border-t border-dashed border-slate-200 my-4"></div>
+        <div className="flex justify-between items-center relative z-10">
+          <span className="font-bold text-slate-500 text-sm uppercase tracking-wide">Total to pay</span>
+          <span className="text-3xl font-black text-slate-900">{plan.price} <span className="text-sm text-slate-400 font-bold">FCFA</span></span>
+        </div>
+      </div>
+
+      {/* Payment Method Selection */}
+      <div className="w-full max-w-md space-y-3 mb-6">
+        <p className="font-bold text-slate-400 text-xs uppercase tracking-widest ml-2">Select Method</p>
+        
+        <div className="grid grid-cols-2 gap-3">
+            <button 
+            onClick={() => setPaymentMethod('momo')}
+            className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${paymentMethod === 'momo' ? 'border-[#FFCC00] bg-yellow-50' : 'border-white bg-white shadow-sm'}`}
+            >
+            <div className="w-10 h-10 bg-[#FFCC00] rounded-full flex items-center justify-center font-bold text-[10px] border border-[#e6b800] text-slate-900">MoMo</div>
+            <span className="font-bold text-slate-700 text-sm">MTN</span>
+            {paymentMethod === 'momo' && <div className="absolute top-2 right-2 text-[#FFCC00]"><Check size={16}/></div>}
+            </button>
+
+            <button 
+            onClick={() => setPaymentMethod('om')}
+            className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${paymentMethod === 'om' ? 'border-[#FF7900] bg-orange-50' : 'border-white bg-white shadow-sm'}`}
+            >
+            <div className="w-10 h-10 bg-[#FF7900] rounded-lg flex items-center justify-center font-bold text-[8px] text-white leading-none">orange<br/>money</div>
+            <span className="font-bold text-slate-700 text-sm">Orange</span>
+            {paymentMethod === 'om' && <div className="absolute top-2 right-2 text-[#FF7900]"><Check size={16}/></div>}
+            </button>
+        </div>
+      </div>
+
+      {/* Phone Number Input */}
+      <div className="w-full max-w-md mb-8">
+        <label className="font-bold text-slate-400 text-xs uppercase tracking-widest ml-2 mb-2 block">
+            Enter {paymentMethod === 'momo' ? 'MTN' : 'Orange'} Number
+        </label>
+        <div className="relative">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                <Phone size={20} />
+            </div>
+            <input 
+                type="tel" 
+                placeholder="670 00 00 00"
+                value={phoneNumber}
+                onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    if (val.length <= 9) setPhoneNumber(val);
+                }}
+                className="w-full pl-12 pr-4 py-4 bg-white border-2 border-slate-100 rounded-2xl font-bold text-lg text-slate-900 focus:outline-none focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all placeholder:text-slate-300"
+            />
+            {phoneNumber.length === 9 && (
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-green-500 animate-in zoom-in">
+                    <Check size={20} strokeWidth={3} />
+                </div>
+            )}
+        </div>
+      </div>
+
+      {/* Pay Button */}
+      <button 
+        onClick={handlePayment}
+        disabled={loading || phoneNumber.length < 9}
+        className={`
+            w-full max-w-md py-4 rounded-2xl font-bold text-lg shadow-xl flex items-center justify-center gap-2 transition-all
+            ${loading || phoneNumber.length < 9 
+                ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
+                : 'bg-slate-900 text-white hover:scale-[1.02] active:scale-95 shadow-slate-200'}
+        `}
+      >
+        {loading ? <Loader2 className="animate-spin" /> : <CreditCard size={20} />}
+        {loading ? "Processing..." : `Pay ${plan.price} FCFA`}
+      </button>
+
+      <p className="mt-6 text-xs text-center text-slate-400 max-w-xs leading-relaxed">
+        You will receive a prompt on <strong>{phoneNumber || "your phone"}</strong> to confirm the payment.
+      </p>
+
+    </div>
+  );
 }

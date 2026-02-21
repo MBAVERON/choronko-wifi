@@ -1,0 +1,4 @@
+2026-02-17 13:45:02.047 [pool-3-thread-1] INFO  com.rs.mv.mvvs.client.catalog.from.scan.CurrentPathScanner - [client:400205]scan file in current open file directory(S:/nando-wifi)
+2026-02-17 13:51:06.660 [pool-3-thread-1] INFO  com.rs.mv.mvvs.client.catalog.from.scan.CurrentPathScanner - [client:400205]scan file in current open file directory(S:/nando-wifi/src/app/payment)
+2026-02-17 13:55:51.416 [pool-3-thread-1] INFO  com.rs.mv.mvvs.client.catalog.from.scan.CurrentPathScanner - [client:400205]scan file in current open file directory(S:/nando-wifi)
+2026-02-17 15:03:13.680 [pool-3-thread-1] INFO  com.rs.mv.mvvs.client.catalog.from.scan.CurrentPathScanner - [client:400205]scan file in current open file directory(S:/nando-wifi)

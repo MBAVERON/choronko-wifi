@@ -1,37 +1,26 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
+import { LanguageProvider } from "@/context/LanguageContext";
 
-// 1. Mobile App Feel (Prevents zooming, sets color)
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false, 
-  themeColor: "#0f172a", 
-};
+const inter = Inter({ subsets: ["latin"] });
 
-// 2. SEO & Branding
 export const metadata: Metadata = {
-  title: "Choronko WIFI | Premium Internet",
-  description: "High-speed, unlimited internet access. Instant connection with MTN & Orange Money.",
-  openGraph: {
-    title: "Choronko WIFI",
-    description: "Get unlimited internet access now.",
-    siteName: "Choronko WIFI",
-    locale: "en_US",
-    type: "website",
-  },
+  title: "Choronko WIFI", // REVERTED
+  description: "High Speed Internet Access in Cameroon",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html lang="en">
-      <body className="antialiased bg-[#F8FAFC] text-slate-900">
-        {children}
+      <body className={inter.className}>
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   );
