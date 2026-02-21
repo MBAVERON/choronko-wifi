@@ -25,9 +25,9 @@ export async function POST(request: Request) {
     }
 
     const payment = new PaymentOperation({
-      applicationKey: process.env.MESOMB_APP_KEY,
-      accessKey: process.env.MESOMB_ACCESS_KEY,
-      secretKey: process.env.MESOMB_SECRET_KEY,
+      applicationKey: process.env.MESOMB_APP_KEY as string,
+      accessKey: process.env.MESOMB_ACCESS_KEY as string,
+      secretKey: process.env.MESOMB_SECRET_KEY as string,
     });
 
     const response = await payment.makeCollect({
