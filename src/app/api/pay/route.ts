@@ -40,8 +40,9 @@ export async function POST(request: Request) {
     if (response.isOperationSuccess()) {
       return NextResponse.json({ 
         success: true, 
-        transactionId: response.pk,
-        status: response.status 
+        // BYPASS: Tell TypeScript to ignore the missing 'pk' and 'status' definitions
+        transactionId: (response as any).pk,
+        status: (response as any).status 
       });
     } else {
       return NextResponse.json({ success: false, message: "Transaction Failed" });
